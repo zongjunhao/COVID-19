@@ -1,12 +1,14 @@
-from bs4 import BeautifulSoup
-from crawler_service.nameMap import country_type_map, city_name_map, country_name_map, continent_name_map
-from crawler_service.db import DB
-import re
 import json
-import time
-import random
 import logging
+import random
+import re
+import time
+
 import requests
+from bs4 import BeautifulSoup
+
+from crawler_service.db import DB
+from crawler_service.nameMap import city_name_map, country_name_map, continent_name_map
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -43,20 +45,6 @@ class Crawler:
         abroad_information = re.search(r'\[(.*)\]', str(soup.find('script', attrs={'id': 'getListByCountryTypeService2true'})))
         if abroad_information:
             self.abroad_parser(abroad_information=abroad_information)
-        # # 中文新闻
-        # news_chinese = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService1'})))
-        # if news_chinese:
-        #     self.news_parser(news=news_chinese)
-        #
-        # # 英文新闻
-        # news_english = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getTimelineService2'})))
-        # if news_english:
-        #     self.news_parser(news=news_english)
-        #
-        # # 谣言
-        # rumors = re.search(r'\[(.*?)\]', str(soup.find('script', attrs={'id': 'getIndexRumorList'})))
-        # if rumors:
-        #     self.rumor_parser(rumors=rumors)
 
         logger.info('Successfully crawled.')
 
@@ -77,7 +65,7 @@ class Crawler:
             self.db.insert(collection='DXYOverall', data=overall_information)
         # self.save_json_to_file("overall_information", overall_information)
 
-    # 各省市确诊数据，处理方式待明确
+    # 各省市确诊数据
     def area_parser(self, area_information):
         area_information = json.loads(area_information.group(0))
         self.save_json_to_file("area_information", area_information)
@@ -122,7 +110,7 @@ class Crawler:
         print(json_result)
         self.save_json_to_file('test', json_result)
 
-    # 国外数据，处理方式待明确
+    # 国外数据
     def abroad_parser(self, abroad_information):
         countries = json.loads(abroad_information.group(0))
         self.save_json_to_file('test_country', countries)
@@ -170,32 +158,6 @@ class Crawler:
 
         self.save_json_to_file('charts_data/by_country', countries)
         print(countries)
-
-    # # 新闻
-    # def news_parser(self, news):
-    #     news = json.loads(news.group(0))
-    #     # print(news)
-    #     for _news in news:
-    #         _news.pop('pubDateStr')
-    #         if self.db.find_one(collection='DXYNews', data=_news):
-    #             continue
-    #         _news['crawlTime'] = self.crawl_timestamp
-    #         # print(news)
-    #         self.db.insert(collection='DXYNews', data=_news)
-    #
-    # # 谣言
-    # def rumor_parser(self, rumors):
-    #     rumors = json.loads(rumors.group(0))
-    #     # print("rumors")
-    #     # print(rumors)
-    #     for rumor in rumors:
-    #         rumor.pop('score')
-    #         rumor['body'] = rumor['body'].replace(' ', '')
-    #         if self.db.find_one(collection='DXYRumors', data=rumor):
-    #             continue
-    #         rumor['crawlTime'] = self.crawl_timestamp
-    #         # print(rumors)
-    #         self.db.insert(collection='DXYRumors', data=rumor)
 
     # 将json数据保存到文件中
     def save_json_to_file(self, filename, data):
