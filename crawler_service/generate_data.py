@@ -19,6 +19,7 @@ pandas.set_option('max_colwidth', 200)
 
 def run():
     data = init_data()
+    generate_by_world(data)
     generate_by_date(data)
 
 
@@ -160,28 +161,6 @@ def generate_by_date(data_df_dxy):
         #     continue
     logger.info("change the data format of city list end")
 
-    # "name": "武汉",                                OK
-    # "provinceName": "湖北省",                      OK
-    # "confirmedCount": 572,                        OK
-    # "curedCount": 32,                             OK
-    # "deadCount": 38,                             OK
-    # "updateTime": "1/25",
-    # "lastUpdate": "2020-01-25T15:55:35.000Z",
-    # "zipCode": "420100",
-    # "suspectedCount": 0,
-    # "insickCount": 502,
-    # "confirmedIncreased": 77,
-    # "curedIncreased": 1,
-    # "deadIncreased": 15
-
-    # "cityName": "武汉",
-    # "confirmedCount": 495,
-    # "suspectedCount": 0,
-    # "curedCount": 31,
-    # "deadCount": 23,
-    # "locationId": 420100,
-    # "cityEnglishName": "Wuhan"
-
     # 将数据按时间组装
     logger.info("reload the data buy date start")
     df_by_date = pandas.DataFrame(index=None)
@@ -208,4 +187,91 @@ def generate_by_date(data_df_dxy):
         json.dump(json_data2, ff, ensure_ascii=False)
 
 
+# 生成世界数据，用于展示动态排名
+def generate_by_world(data_df_dxy):
+    del data_df_dxy['confirmedCountRank']
+    del data_df_dxy['suspectedCount']
+    del data_df_dxy['deadCountRank']
+    del data_df_dxy['deadRate']
+    del data_df_dxy['deadRateRank']
+    del data_df_dxy['comment']
+    del data_df_dxy['locationId']
+    del data_df_dxy['countryShortCode']
+    del data_df_dxy['countryFullName']
+    del data_df_dxy['incrVo']
+    del data_df_dxy['continentName']
+    del data_df_dxy['countryName']
+    del data_df_dxy['provinceShortName']
+    del data_df_dxy['continentEnglishName']
+    del data_df_dxy['countryEnglishName']
+    del data_df_dxy['provinceEnglishName']
+    del data_df_dxy['cities']
+    del data_df_dxy['createTime']
+    del data_df_dxy['cityName']
+    del data_df_dxy['modifyTime']
+    del data_df_dxy['updateTime']
+    # 处理可能存在的现存确诊为空的情况
+    data_df_dxy['currentConfirmedCount'] = data_df_dxy['confirmedCount'] - data_df_dxy['curedCount'] - data_df_dxy['deadCount']
+
+    # 提取所有省份和国家
+    df_temp = data_df_dxy['provinceName']
+    df_province_and_country = df_temp.drop_duplicates()  # 去重 这个返回Series对象
+    df_province_and_country = df_province_and_country.reset_index(drop=True)  # 重建索引
+
+    # 重建索引
+    data_df_dxy = data_df_dxy.reset_index(drop=True)
+
+    df = pandas.DataFrame(index=None)
+
+    # 获取日期列表
+    df_date = data_df_dxy['date']
+    df_date = df_date.drop_duplicates()  # 去重 返回Series对象
+    df_date = df_date.sort_values()
+
+    # 每个省份当天仅保留一条数据、清洗完毕后可能有的省份当天数据缺失
+    for day in df_date:
+        for name in df_province_and_country:
+            logger.info(day.strftime('%Y-%m-%d') + name)
+            # 找到当前省份当前日期对应的数据
+            df1 = data_df_dxy.loc[(data_df_dxy['provinceName'].str.contains(name)) & (data_df_dxy['date'] == day), :]
+            # 找出当天该省份最后更新的一条数据
+            df2 = df1.loc[(df1['lastUpdate'] == df1['lastUpdate'].max()), :]
+            df.append(df2)
+            df = df.append(df2)
+    print(df)
+
+    # 补齐一个省的空数据
+    for day in df_date:
+        # 最后一天数据不处理
+        if day == df_date.max():
+            continue
+        date_add = day + timedelta(days=1)
+        for name in df_province_and_country:
+            # 找到当前省份当前日期对应的数据
+            df1 = df.loc[(df['provinceName'].str.contains(name)) & (df['date'] == day), :]
+            # 该省份在当前日期有数据
+            if df1.shape[0] > 0:
+                # 寻找该省份在第二天的数据
+                df2 = df.loc[(df['provinceName'].str.contains(name)) & (df['date'] == date_add), :]
+                if df2.shape[0] == 0:  # 后面一天省数据为空 把当前数据填到后一天
+                    logger.info('追加 ' + date_add.strftime('%Y-%m-%d') + name)
+
+                    for index, data in df1.iterrows():  # 改变值 使用索引
+                        time = df1.loc[index, 'lastUpdate']
+                        df1.loc[index, 'date'] = date_add
+                        df1.loc[index, 'lastUpdate'] = pandas.to_datetime(time) + timedelta(days=1)
+                    df = df.append(df1)
+
+    # 输出数据，为保证excel打开兼容，输出为UTF8带签名格式
+    df.to_csv('../data/by_world.csv', encoding="utf_8_sig", index=False)
+
+
+# 'provinceName', 'currentConfirmedCount', 'confirmedCount',
+#        'confirmedCountRank', 'suspectedCount', 'curedCount', 'deadCount',
+#        'deadCountRank', 'deadRate', 'deadRateRank', 'comment', 'locationId',
+#        'countryShortCode', 'countryFullName', 'incrVo', 'continentName',
+#        'countryName', 'provinceShortName', 'continentEnglishName',
+#        'countryEnglishName', 'provinceEnglishName', 'updateTime', 'cities',
+#        'createTime', 'modifyTime', 'cityName', 'lastUpdate', 'date'],
+#       dtype='object'
 run()

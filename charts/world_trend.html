@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="assets/axios.min.js"></script>
     <title>COVID-19 Trends</title>
 
     <style>
@@ -81,25 +84,20 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto" id="navbar">
             <li class="nav-item">
-                <a class="nav-link" href="#tab=world-map">世界地图</a>
+                <a class="nav-link" href="index.html#tab=world-map">世界地图</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="world_trend.html#=aaa">世界趋势</a>
+                <a class="nav-link" href="#">世界趋势</a>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#tab=china-trends" id="chinaDropdown" data-toggle="dropdown"
+                <a class="nav-link dropdown-toggle" href="index.html#tab=china-trends" id="chinaDropdown" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">中国趋势</a>
                 <div class="dropdown-menu" aria-labelledby="chinaDropdown">
-                    <a class="dropdown-item" href="#tab=map">省市地图</a>
-                    <a class="dropdown-item" href="#tab=cities-map">全部城市地图</a>
+                    <a class="dropdown-item" href="index.html#tab=map">省市地图</a>
+                    <a class="dropdown-item" href="index.html#tab=cities-map">全部城市地图</a>
                 </div>
             </li>
         </ul>
-<!--        <ul class="navbar-nav mr-auto">-->
-<!--            <li class="nav-item">-->
-<!--                <a class="nav-link" href="world_trend.html">世界趋势</a>-->
-<!--            </li>-->
-<!--        </ul>-->
         <ul class="navbar-nav" hidden>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-toggle="dropdown"
@@ -115,9 +113,16 @@
     </div>
 </nav>
 
-<div class="container-fluid" id="chart_container">
-    Loading...
-</div>
+<center>
+    <!--        <input type="file" id="inputfile" name="fileContent">-->
+    <svg width="1500" height="650"></svg>
+    <script src="ranking/config.js"></script>
+    <script src="ranking/imgs.js"></script>
+    <script src="ranking/color_ranges.js"></script>
+    <script src="ranking/visual.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-158038850-1"></script>
+    <link rel="stylesheet" href="ranking/stylesheet.css">
+</center>
 
 <script src="assets/jquery.min.js"></script>
 <script src="assets/jquery.loading.min.js"></script>
