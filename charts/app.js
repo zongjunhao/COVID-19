@@ -558,7 +558,7 @@ async function createMapChartConfig({mapName, data, valueKey = 'confirmedCount'}
                 // loop: false,
                 autoPlay: false,
                 currentIndex: data.length - 1,
-                playInterval: 500,
+                playInterval: 300,
                 // controlStyle: {
                 //     position: 'left'
                 // },
